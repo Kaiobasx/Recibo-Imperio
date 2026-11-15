@@ -1,6 +1,7 @@
-// Guarda o número do último recibo emitido (Upstash Redis, pela integração da Vercel).
+// Guarda o número do último recibo emitido (Upstash Redis, pela integração da Vercel). Exige login.
 // GET  /api/numero -> { ultimo }   consulta, não altera
 // POST /api/numero -> { numero }   soma 1 e devolve o novo número (operação atômica)
+const auth = require('../lib/auth');
 const BASE = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 const CHAVE = 'recibo:numero';
@@ -18,6 +19,7 @@ async function redis(comando) {
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
+  if (!auth.logado(req)) return res.status(401).json({ erro: 'Faça login' });
   try {
     if (!BASE || !TOKEN) throw new Error('Banco não configurado');
     if (req.method === 'POST') {
